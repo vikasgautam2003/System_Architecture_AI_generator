@@ -23,3 +23,44 @@
   scrollbar-width: thin;
   scrollbar-color: #3d4f80 transparent;
 }
+
+
+
+
+
+@keyframes infinite-scroll {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.scroll-container {
+  animation: infinite-scroll 18s linear infinite;
+}
+
+
+
+
+
+
+
+
+
+@keyframes fadeInSlow {
+  0% { opacity: 0; transform: translateY(6px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+.animate-fadeInSlow {
+  animation: fadeInSlow 1.2s ease-out forwards;
+}
+
+@keyframes scan {
+  0% { transform: translateY(0); opacity: 0.8; }
+  100% { transform: translateY(16rem); opacity: 0; }
+}
+.animate-scan {
+  animation: scan 3s infinite linear;
+}
