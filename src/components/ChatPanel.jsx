@@ -68,78 +68,208 @@
 
 
 
+// "use client";
+
+// import { useState } from "react";
+// import ArchitectChat from "./ArchitectChat";
+// import TechChat from "./TechChat";
+
+// export default function ChatPanel({ onGenerated }) {
+//   const [active, setActive] = useState("architect");
+
+//   return (
+//     <div className="w-1/4 h-full flex flex-col border-l border-slate-800 bg-[#0c1317]">
+//       <div
+//   className="
+//     p-4 flex items-center justify-between
+//     backdrop-blur-xl
+//     border-b border-white/10
+//     bg-[rgba(15,20,33,0.6)]
+//     shadow-[0_8px_20px_rgba(0,0,0,0.4)]
+//   "
+// >
+//   <h2
+//     className="
+//       text-lg font-semibold tracking-wide
+//       bg-gradient-to-r from-white to-blue-200 bg-clip-text text-transparent
+//     "
+//   >
+//     {active === "architect" ? "AI Architect" : "Tech Helper"}
+//   </h2>
+
+//   <div
+//     className="
+//       flex items-center rounded-2xl overflow-hidden
+//       border border-white/20
+//       bg-[rgba(20,28,46,0.6)] backdrop-blur-lg
+//       shadow-inner
+//     "
+//   >
+//     <button
+//       onClick={() => setActive("architect")}
+//       className={`px-4 py-1.5 text-sm font-medium transition-all
+//         ${
+//           active === "architect"
+//             ? "bg-gradient-to-r from-blue-600 to-blue-500 text-white shadow-[0_0_12px_rgba(0,120,255,0.6)]"
+//             : "text-gray-300 hover:text-white"
+//         }
+//       `}
+//     >
+//       Architect
+//     </button>
+
+//     <button
+//       onClick={() => setActive("tech")}
+//       className={`
+//         px-4 py-1.5 text-sm font-medium transition-all
+//         ${
+//           active === "tech"
+//             ? "bg-gradient-to-r from-green-600 to-green-500 text-black shadow-[0_0_12px_rgba(0,255,120,0.4)]"
+//             : "text-gray-300 hover:text-white"
+//         }
+//       `}
+//     >
+//       Tech
+//     </button>
+//   </div>
+// </div>
+
+
+//       {active === "architect" ? (
+//         <ArchitectChat onGenerated={onGenerated} />
+//       ) : (
+//         <TechChat />
+//       )}
+//     </div>
+//   );
+// }
+
+
+
+
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import ArchitectChat from "./ArchitectChat";
 import TechChat from "./TechChat";
 
 export default function ChatPanel({ onGenerated }) {
   const [active, setActive] = useState("architect");
 
+  const [architectMessages, setArchitectMessages] = useState([]);
+  const [techMessages, setTechMessages] = useState([]);
+
+  const [prompt, setPrompt] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const raw = localStorage.getItem("chat_memory_v2");
+    if (!raw) return;
+
+    const parsed = JSON.parse(raw);
+    setArchitectMessages(parsed.architect || []);
+    setTechMessages(parsed.tech || []);
+  }, []);
+
+  useEffect(() => {
+    const store = {
+      architect: architectMessages,
+      tech: techMessages,
+    };
+    localStorage.setItem("chat_memory_v2", JSON.stringify(store));
+  }, [architectMessages, techMessages]);
+
+  async function sendMessage() {
+    if (!prompt.trim()) return;
+    const text = prompt.trim();
+    const userObj = { role: "user", content: text };
+
+    setLoading(true);
+    setPrompt("");
+
+    if (active === "architect") {
+      setArchitectMessages((m) => [...m, userObj]);
+
+      const res = await fetch("/api/generate-diagram", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt: text }),
+      });
+
+      const data = await res.json();
+      onGenerated(data);
+
+      setArchitectMessages((m) => [
+        ...m,
+        { role: "assistant", content: "Architecture updated." },
+      ]);
+    } else {
+      setTechMessages((m) => [...m, userObj]);
+
+      const res = await fetch("/api/chat-groq", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ messages: [...techMessages, userObj] }),
+      });
+
+      const data = await res.json();
+      setTechMessages((m) => [
+        ...m,
+        { role: "assistant", content: data.answer || "No response." },
+      ]);
+    }
+
+    setLoading(false);
+  }
+
   return (
     <div className="w-1/4 h-full flex flex-col border-l border-slate-800 bg-[#0c1317]">
-      <div
-  className="
-    p-4 flex items-center justify-between
-    backdrop-blur-xl
-    border-b border-white/10
-    bg-[rgba(15,20,33,0.6)]
-    shadow-[0_8px_20px_rgba(0,0,0,0.4)]
-  "
->
-  <h2
-    className="
-      text-lg font-semibold tracking-wide
-      bg-gradient-to-r from-white to-blue-200 bg-clip-text text-transparent
-    "
-  >
-    {active === "architect" ? "AI Architect" : "Tech Helper"}
-  </h2>
+      <div className="p-4 flex items-center justify-between backdrop-blur-xl border-b border-white/10 bg-[rgba(15,20,33,0.6)] shadow-[0_8px_20px_rgba(0,0,0,0.4)]">
+        <h2 className="text-lg font-semibold tracking-wide bg-gradient-to-r from-white to-blue-200 bg-clip-text text-transparent">
+          {active === "architect" ? "AI Architect" : "Tech Helper"}
+        </h2>
 
-  <div
-    className="
-      flex items-center rounded-2xl overflow-hidden
-      border border-white/20
-      bg-[rgba(20,28,46,0.6)] backdrop-blur-lg
-      shadow-inner
-    "
-  >
-    <button
-      onClick={() => setActive("architect")}
-      className={`
-        px-4 py-1.5 text-sm font-medium transition-all
-        ${
-          active === "architect"
-            ? "bg-gradient-to-r from-blue-600 to-blue-500 text-white shadow-[0_0_12px_rgba(0,120,255,0.6)]"
-            : "text-gray-300 hover:text-white"
-        }
-      `}
-    >
-      Architect
-    </button>
+        <div className="flex items-center rounded-2xl overflow-hidden border border-white/20 bg-[rgba(20,28,46,0.6)] backdrop-blur-lg shadow-inner">
+          <button
+            onClick={() => setActive("architect")}
+            className={`px-4 py-1.5 text-sm font-medium transition-all ${
+              active === "architect"
+                ? "bg-gradient-to-r from-blue-600 to-blue-500 text-white shadow-[0_0_12px_rgba(0,120,255,0.6)]"
+                : "text-gray-300 hover:text-white"
+            }`}
+          >
+            Architect
+          </button>
 
-    <button
-      onClick={() => setActive("tech")}
-      className={`
-        px-4 py-1.5 text-sm font-medium transition-all
-        ${
-          active === "tech"
-            ? "bg-gradient-to-r from-green-600 to-green-500 text-black shadow-[0_0_12px_rgba(0,255,120,0.4)]"
-            : "text-gray-300 hover:text-white"
-        }
-      `}
-    >
-      Tech
-    </button>
-  </div>
-</div>
-
+          <button
+            onClick={() => setActive("tech")}
+            className={`px-4 py-1.5 text-sm font-medium transition-all ${
+              active === "tech"
+                ? "bg-gradient-to-r from-green-600 to-green-500 text-black shadow-[0_0_12px_rgba(0,255,120,0.4)]"
+                : "text-gray-300 hover:text-white"
+            }`}
+          >
+            Tech
+          </button>
+        </div>
+      </div>
 
       {active === "architect" ? (
-        <ArchitectChat onGenerated={onGenerated} />
+        <ArchitectChat
+          messages={architectMessages}
+          prompt={prompt}
+          setPrompt={setPrompt}
+          loading={loading}
+          sendMessage={sendMessage}
+        />
       ) : (
-        <TechChat />
+        <TechChat
+          messages={techMessages}
+          prompt={prompt}
+          setPrompt={setPrompt}
+          loading={loading}
+          sendMessage={sendMessage}
+        />
       )}
     </div>
   );

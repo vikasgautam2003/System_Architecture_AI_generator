@@ -1,9 +1,51 @@
+// import Mermaid from "@/components/Mermaid";
+
+// export default function DiagramSection({ chart, explanation, onShowModal }) {
+//   return (
+//     <div
+//       className="w-3/4 h-full p-6 relative border-r border-slate-800 overflow-auto"
+//       style={{
+//         backgroundImage:
+//           "linear-gradient(rgba(255,255,255,0.06) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.06) 1px, transparent 1px)",
+//         backgroundSize: "30px 30px",
+//       }}
+//     >
+//       <h1 className="text-3xl font-bold mb-6">Architecture Diagram</h1>
+
+//       <div className="w-full min-h-[80%] flex justify-center p-4">
+//         <Mermaid key={chart} chart={chart} />
+//       </div>
+
+//       {explanation && (
+//         <button
+//           onClick={onShowModal}
+//           className="absolute bottom-6 left-6 bg-purple-600 hover:bg-purple-500 text-white px-5 py-2 rounded-xl shadow-lg transition"
+//         >
+//           View Explanation
+//         </button>
+//       )}
+//     </div>
+//   );
+// }
+
+
+
+
+
 import Mermaid from "@/components/Mermaid";
 
-export default function DiagramSection({ chart, explanation, onShowModal }) {
+
+
+
+export default function DiagramSection({
+  chart,
+  explanation,
+  techStacks,
+  onShowModal,
+  onShowTechStacks
+}) {
   return (
-    <div
-      className="w-3/4 h-full p-6 relative border-r border-slate-800 overflow-auto"
+    <div className="w-3/4 h-full p-6 relative border-r border-slate-800 overflow-auto"
       style={{
         backgroundImage:
           "linear-gradient(rgba(255,255,255,0.06) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.06) 1px, transparent 1px)",
@@ -13,7 +55,7 @@ export default function DiagramSection({ chart, explanation, onShowModal }) {
       <h1 className="text-3xl font-bold mb-6">Architecture Diagram</h1>
 
       <div className="w-full min-h-[80%] flex justify-center p-4">
-        <Mermaid key={chart} chart={chart} />
+        <Mermaid chart={chart} />
       </div>
 
       {explanation && (
@@ -24,6 +66,16 @@ export default function DiagramSection({ chart, explanation, onShowModal }) {
           View Explanation
         </button>
       )}
+
+      {techStacks && (
+        <button
+          onClick={onShowTechStacks}
+          className="absolute bottom-6 left-48 bg-blue-600 hover:bg-blue-500 text-white px-5 py-2 rounded-xl shadow-lg transition"
+        >
+          View Tech Stack
+        </button>
+      )}
     </div>
   );
 }
+
