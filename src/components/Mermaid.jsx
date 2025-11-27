@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import mermaid from "mermaid";
 
 mermaid.initialize({
@@ -10,41 +10,63 @@ mermaid.initialize({
   fontFamily: "monospace",
 });
 
+function sanitizeMermaid(text) {
+  return text
+    .split("\n")
+    .map((line) => {
+      const trimmed = line.trim();
+
+      if (/^(PS|Cl|Re|No|Un|Er|Di)\b/i.test(trimmed)) return "";
+
+      return line.replace(/\s+[A-Za-z]{1,3}$/, "");
+    })
+    .join("\n")
+    .trim();
+}
+
 export default function Mermaid({ chart }) {
-  const containerRef = useRef(null);
-  const [isRendered, setIsRendered] = useState(false);
+  const ref = useRef(null);
+  const [status, setStatus] = useState("idle");
 
   useEffect(() => {
-    if (!chart || !containerRef.current) return;
+    if (!chart || !ref.current) return;
 
-    const cleanChart = chart.trim().replace(/\r/g, "");
+    const clean = sanitizeMermaid(chart);
 
-    async function renderChart() {
+    async function render() {
+      setStatus("loading");
+      ref.current.innerHTML = "";
+
       try {
-        containerRef.current.innerHTML = "";
+        mermaid.parse(clean);
 
-        const id = `m-${Math.random().toString(36).slice(2)}`;
-        const { svg } = await mermaid.render(id, cleanChart);
+        const result = await Promise.race([
+          mermaid.render(`m-${Date.now()}`, clean),
+          new Promise((_, reject) =>
+            setTimeout(() => reject(new Error("Mermaid timeout")), 6000)
+          ),
+        ]);
 
-        containerRef.current.innerHTML = svg;
-        setIsRendered(true);
+        ref.current.innerHTML = result.svg;
+        setStatus("done");
       } catch (err) {
-        console.error("Mermaid Render Error:", err);
-
-        containerRef.current.innerHTML =
-          `<div class='text-red-400 p-4'>Invalid Mermaid Diagram</div>`;
+        ref.current.innerHTML = `
+          <div class="text-red-400 p-4 max-w-lg">
+            <b>Diagram Error:</b><br>
+            <pre class="mt-2 bg-black/40 p-3 rounded">${err.message}</pre>
+          </div>
+        `;
+        setStatus("error");
       }
     }
 
-    renderChart();
+    render();
   }, [chart]);
 
   return (
     <div
-      ref={containerRef}
-      className={`mermaid-container flex justify-center items-center min-h-[300px] w-full overflow-x-auto transition-opacity duration-500 ${
-        isRendered ? "opacity-100" : "opacity-0"
-      }`}
-    ></div>
+      ref={ref}
+      className="min-h-[350px] w-full flex justify-center items-center overflow-auto transition-opacity duration-300"
+    />
   );
 }
