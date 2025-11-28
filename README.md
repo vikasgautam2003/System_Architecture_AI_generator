@@ -18,7 +18,13 @@ Mermaid diagrams, tech stacks, explanations, scaling plans, and best-practice ar
 ---
 
 ## 🚀 **Live Demo**
-Coming soon…
+(https://blueprintx.vercel.app/ )
+
+---
+
+## 📸 Screenshot Preview
+
+![BlueprintX UI Screenshot](public/sys.png)
 
 ---
 
